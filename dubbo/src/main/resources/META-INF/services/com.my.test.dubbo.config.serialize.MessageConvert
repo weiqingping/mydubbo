@@ -1,0 +1,2 @@
+com.my.test.dubbo.config.serialize.HessianMessageConvert
+com.my.test.dubbo.config.serialize.FastJsonConvert

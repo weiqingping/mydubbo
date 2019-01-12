@@ -1,0 +1,4 @@
+com.my.test.dubbo.config.message.handlers.HessionSerializeEncode
+com.my.test.dubbo.config.message.handlers.HessionSerializeDecode
+com.my.test.dubbo.config.message.handlers.JsonSerializeDecode
+com.my.test.dubbo.config.message.handlers.JsonSerializeEncode

@@ -1,0 +1,5 @@
+com.my.test.dubbo.config.protocol.DubboProtocolExport
+com.my.test.dubbo.config.protocol.HessianProtocolExport
+com.my.test.dubbo.config.protocol.HttpProtocolExport
+com.my.test.dubbo.config.protocol.RmiProtocolExport
+com.my.test.dubbo.config.protocol.WebserviceProtocolExport

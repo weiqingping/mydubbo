@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+targetNamespace="http://www.example.org/my" 
+xmlns="http://www.example.org/my" 
+elementFormDefault="qualified">
+<xsd:annotation><xsd:documentation><![CDATA[ dubbo config ]]></xsd:documentation></xsd:annotation>
+<xsd:complexType name="absratctInterface">
+<xsd:complexContent>
+<xsd:extension base="serializeType">
+<xsd:attribute name="interfaces" type="xsd:token" use="required"/>
+<xsd:attribute name="timeout" type="xsd:long" use="optional"/>
+<xsd:attribute name="registry" type="xsd:string" use="optional"/>
+<xsd:attribute name="version" type="xsd:string"></xsd:attribute>
+<xsd:attribute name="id" type="xsd:string" />
+</xsd:extension>
+</xsd:complexContent>
+
+</xsd:complexType>
+
+<xsd:complexType name="serializeType">
+<xsd:attribute name="serialize" default="hessian" use="optional" >
+<xsd:simpleType>
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="hessian"/>
+<xsd:enumeration value="jdk"/>
+<xsd:enumeration value="dubbo"/>
+<xsd:enumeration value="json"/>
+</xsd:restriction>
+</xsd:simpleType>
+
+</xsd:attribute>
+</xsd:complexType>
+
+<xsd:complexType name="serviceType">
+<xsd:complexContent>
+<xsd:extension base="absratctInterface">
+<xsd:sequence maxOccurs="unbounded" minOccurs="0">
+<xsd:element name="method" minOccurs="0" maxOccurs="unbounded" >
+<xsd:complexType>
+<xsd:attributeGroup ref="methodAttrGroup"></xsd:attributeGroup>
+</xsd:complexType>
+</xsd:element>
+</xsd:sequence>
+<xsd:attribute name="ref" use="optional" type="xsd:string"/>
+<xsd:attribute name="className" use="optional" type="xsd:string"/>
+<xsd:attribute name="loadBanlance" use="optional" default="random">
+<xsd:simpleType>
+<xsd:restriction base="loadBanlanceType"></xsd:restriction>
+</xsd:simpleType>
+</xsd:attribute>
+<xsd:attribute name="weight" type="xsd:int" use="optional"></xsd:attribute>
+<xsd:attribute name="protocol"  type="xsd:string" use="optional" />
+
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+
+<xsd:simpleType name="loadBanlanceType"  >
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="random"></xsd:enumeration>
+<xsd:enumeration value="roundRobin"></xsd:enumeration>
+<xsd:enumeration value="leastActive"></xsd:enumeration>
+<xsd:enumeration value="consistentHash"></xsd:enumeration>
+</xsd:restriction>
+</xsd:simpleType>
+
+<xsd:complexType name="applicationType">
+<xsd:attribute name="owner" type="xsd:string" />
+<xsd:attribute name="name" type="xsd:string"/>
+<xsd:attribute name="id" type="xsd:string"></xsd:attribute>
+</xsd:complexType>
+
+<xsd:simpleType name="registryProtocolType" >
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="zookeeper"></xsd:enumeration>
+<xsd:enumeration value="redis"></xsd:enumeration>
+<xsd:enumeration value="muticast"></xsd:enumeration>
+</xsd:restriction>
+
+</xsd:simpleType>
+
+<xsd:complexType name="registryType">
+<xsd:attribute name="address" type="xsd:anyURI"></xsd:attribute>
+<xsd:attribute name="id" type="xsd:string"></xsd:attribute>
+</xsd:complexType>
+
+
+<xsd:simpleType name="protocolSimpleType">
+<xsd:restriction base="xsd:string">
+<xsd:enumeration value="hessian"/>
+<xsd:enumeration value="dubbo"/>
+<xsd:enumeration value="webservice"/>
+<xsd:enumeration value="http"/>
+<xsd:enumeration value="rmi"/>
+</xsd:restriction>
+</xsd:simpleType>
+
+<xsd:complexType name="protocolType">
+<xsd:complexContent>
+<xsd:extension base="serializeType">
+<xsd:attribute name="name" >
+<xsd:simpleType>
+<xsd:restriction base="protocolSimpleType"></xsd:restriction>
+</xsd:simpleType>
+</xsd:attribute>
+<xsd:attribute name="port" type="xsd:int" use="optional"></xsd:attribute>
+<xsd:attribute name="timeout" type="xsd:long" use="optional"/>
+<xsd:attribute name="id" type="xsd:string"></xsd:attribute>
+<xsd:attribute name="host" type="xsd:string"></xsd:attribute>
+<xsd:attribute name="loadBanlance" use="optional">
+<xsd:simpleType>
+<xsd:restriction base="loadBanlanceType">
+</xsd:restriction>
+</xsd:simpleType>
+</xsd:attribute>
+</xsd:extension>
+</xsd:complexContent>
+
+</xsd:complexType>
+
+<xsd:complexType name="referenceType">
+<xsd:complexContent>
+<xsd:extension base="absratctInterface">
+<xsd:attribute name="url" use="optional" type="xsd:anyURI"/>
+<xsd:attribute name="protocol"  type="xsd:string" use="optional" />
+</xsd:extension>
+</xsd:complexContent>
+</xsd:complexType>
+
+<xsd:attributeGroup name="methodAttrGroup">
+<xsd:attribute name="name" use="required" type="xsd:token"></xsd:attribute>
+<xsd:attribute name="weight" type="xsd:int"></xsd:attribute>
+<xsd:attribute name="servicecode" type="xsd:token"></xsd:attribute>
+</xsd:attributeGroup>
+
+<xsd:element name="service" type="serviceType"/>
+<xsd:element name="application" type="applicationType" />
+<xsd:element name="registry" type="registryType" />
+<xsd:element name="protocol" type="protocolType" />
+<xsd:element name="reference" type="referenceType"/>
+<xsd:element name="componet-scan" />
+
+</xsd:schema>
