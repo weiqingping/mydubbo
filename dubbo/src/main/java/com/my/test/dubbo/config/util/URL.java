@@ -1202,6 +1202,10 @@ public final class URL implements Serializable {
     public String getServiceInterface() {
         return getParameter(Constants.INTERFACE_KEY, path);
     }
+    
+    public String getVersion(){
+    	return getParameter(Constants.URL_PARAM_VERSION);
+    }
 
     public URL setServiceInterface(String service) {
         return addParameter(Constants.INTERFACE_KEY, service);

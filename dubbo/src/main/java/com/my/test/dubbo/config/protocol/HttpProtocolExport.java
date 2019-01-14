@@ -17,6 +17,8 @@ import com.my.test.dubbo.config.server.JettyHttpServer;
 import com.my.test.dubbo.config.server.RequestHttpHandler;
 import com.my.test.dubbo.config.server.Server;
 import com.my.test.dubbo.config.util.CommonUtil;
+import com.my.test.dubbo.config.util.Constants;
+import com.my.test.dubbo.config.util.StringUtils;
 import com.my.test.dubbo.config.util.URL;
 
 @SPI("http")
@@ -53,6 +55,10 @@ public class HttpProtocolExport implements ProtocolExport {
 	}
 
 	public Object invoke(String url,RefrenceConfig config, Method method, Object[] parmters) throws Exception {
+		if (StringUtils.isNotEmpty(config.getVersion())) {
+			URL uri=URL.valueOf(url).addParameter(Constants.URL_PARAM_VERSION, config.getVersion());
+			url=uri.toString();
+		}
 		executor.setUrl(URL.valueOf(url));
 		HttpInvokerProxyFactoryBean factortBean=new HttpInvokerProxyFactoryBean();
 		factortBean.setHttpInvokerRequestExecutor(executor);

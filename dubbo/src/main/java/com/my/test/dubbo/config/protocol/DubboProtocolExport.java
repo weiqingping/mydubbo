@@ -23,6 +23,7 @@ import com.my.test.dubbo.config.server.NettyServer;
 import com.my.test.dubbo.config.server.Server;
 import com.my.test.dubbo.config.server.proxy.ServiceProxy;
 import com.my.test.dubbo.config.util.CommonUtil;
+import com.my.test.dubbo.config.util.Constants;
 import com.my.test.dubbo.config.util.StringUtils;
 import com.my.test.dubbo.config.util.URL;
 
@@ -71,7 +72,8 @@ public class DubboProtocolExport implements ProtocolExport {
 	public Object invoke(String url,RefrenceConfig config, Method method,Object[]parmters) throws Exception {
 		//String key = url;
 		if (StringUtils.isNotEmpty(config.getVersion())) {
-			url += "?version=" + config.getVersion();
+			URL uri=URL.valueOf(url).addParameter(Constants.URL_PARAM_VERSION, config.getVersion());
+			url=uri.toString();
 		}
 		Request request = new Request(method.getName(), url,url, parmters, method.getParameterTypes(),Class.forName(config.getInterfaces()));
 	

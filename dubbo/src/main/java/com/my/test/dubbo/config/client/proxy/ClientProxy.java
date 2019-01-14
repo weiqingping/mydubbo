@@ -121,6 +121,10 @@ public class ClientProxy implements InvocationHandler {
 							result.add(url.toString());
 						}
 					});
+					if(result.isEmpty()){
+						throw new RuntimeException("no service for version:"+this.config.getVersion()+" in the service:"+this.config.getInterfaces());
+					}
+					
 				}
 
 				if (result.isEmpty()) {
