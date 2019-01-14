@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.apache.curator.shaded.com.google.common.collect.Lists;
 
@@ -95,23 +96,23 @@ public class ClientProxy implements InvocationHandler {
 			urls = this.config.getRegistrys().get(0).getContailner().getUrlList(this.config.getInterfaces());
 			if (null != urls && !urls.isEmpty()) {
 				result.clear();
-				Iterator<String> its= urls.stream().filter(str->{
+				Iterator<String> its = urls.stream().filter(str -> {
 					URL url = URL.valueOf(str);
 					String pro = url.getProtocol();
 					if (StringUtils.isEquals(this.config.getProtocol().getName(), pro)) {
 						return true;
 					}
 					return false;
-					
+
 				}).iterator();
-				
-				 ;
-				if(its!=null&&its.hasNext()){
-				urls=new HashSet<>(Lists.newArrayList(its));
-				}else{
+
+				;
+				if (its != null && its.hasNext()) {
+					urls = new HashSet<>(Lists.newArrayList(its));
+				} else {
 					urls.clear();
 				}
-				
+
 				if (StringUtils.isNotEmpty(this.config.getVersion())) {
 					urls.stream().forEach(urlstr -> {
 						URL url = URL.valueOf(urlstr);
@@ -136,6 +137,32 @@ public class ClientProxy implements InvocationHandler {
 				if (result.isEmpty()) {
 					result.addAll(urls);
 				}
+				//筛选数据，保证每个服务器只存一条地址信息
+				Map<String,String>filterMap=new HashMap<>();
+				if(null!=result&&!result.isEmpty()){
+					result.forEach(str->{
+						URL u = URL.valueOf(str);
+						String host=u.getHost();
+						if(filterMap.containsKey(host)){
+							String oldVersion=URL.valueOf(filterMap.get(host)).getParameter(Constants.URL_PARAM_VERSION);
+							String version=u.getParameter(Constants.URL_PARAM_VERSION)==null?"*":u.getParameter(Constants.URL_PARAM_VERSION);
+							if(version.compareTo(oldVersion)>0){
+								filterMap.put(host, str);
+							}
+						}else{
+							filterMap.put(host, str);
+						}
+                        
+						
+					});
+				}
+
+		
+
+				if (null != filterMap && !filterMap.isEmpty()) {
+					result.clear();
+					result.addAll(filterMap.values());
+				}
 			}
 		}
 		setLoadBanlanceName(result);
@@ -151,36 +178,36 @@ public class ClientProxy implements InvocationHandler {
 	}
 
 	public void setLoadBanlanceName(Set<String> urls) {
-        if(StringUtils.isEmpty(this.config.getLoadBanlance())){
-		if (null != urls && !urls.isEmpty()) {
-			if (StringUtils.isEmpty(this.config.getLoadBanlance())) {
-				Map<String, AtomicInteger> banlanceSort = new HashMap<String, AtomicInteger>();
+		if (StringUtils.isEmpty(this.config.getLoadBanlance())) {
+			if (null != urls && !urls.isEmpty()) {
+				if (StringUtils.isEmpty(this.config.getLoadBanlance())) {
+					Map<String, AtomicInteger> banlanceSort = new HashMap<String, AtomicInteger>();
 
-				urls.stream().forEach(str -> {
-					URL url = URL.valueOf(str);
-					String banlance = url.getParameter(Constants.URL_PARAM_LOADBANLANCE);
-					if (StringUtils.isEmpty(banlance)) {
-						banlance = "*";
-					}
-					if (!banlanceSort.containsKey(banlance)) {
-						banlanceSort.put(banlance, new AtomicInteger(1));
+					urls.stream().forEach(str -> {
+						URL url = URL.valueOf(str);
+						String banlance = url.getParameter(Constants.URL_PARAM_LOADBANLANCE);
+						if (StringUtils.isEmpty(banlance)) {
+							banlance = "*";
+						}
+						if (!banlanceSort.containsKey(banlance)) {
+							banlanceSort.put(banlance, new AtomicInteger(1));
+						} else {
+							banlanceSort.get(banlance).incrementAndGet();
+						}
+					});
+
+					List<Map.Entry<String, AtomicInteger>> list = new ArrayList<Map.Entry<String, AtomicInteger>>(
+							banlanceSort.entrySet());
+					list.sort((c1, c2) -> Integer.valueOf(c2.getValue().get()).compareTo(c1.getValue().get()));
+					if (null != list && !list.isEmpty()) {
+						config.setLoadBanlance(list.get(0).getKey());
 					} else {
-						banlanceSort.get(banlance).incrementAndGet();
+						config.setLoadBanlance("random");
 					}
-				});
-
-				List<Map.Entry<String, AtomicInteger>> list = new ArrayList<Map.Entry<String, AtomicInteger>>(
-						banlanceSort.entrySet());
-				list.sort((c1, c2) -> Integer.valueOf(c2.getValue().get()).compareTo(c1.getValue().get()));
-				if (null != list && !list.isEmpty()) {
-					config.setLoadBanlance(list.get(0).getKey());
-				} else {
-					config.setLoadBanlance("random");
 				}
-			}
 
+			}
 		}
-        }
 
 	}
 
