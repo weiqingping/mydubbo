@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.curator.shaded.com.google.common.collect.Lists;
+import org.slf4j.LoggerFactory;
 
 import com.my.test.dubbo.config.banlance.BalanceFactory;
 import com.my.test.dubbo.config.banlance.LoadBanlanceProvider;
@@ -23,6 +24,7 @@ import com.my.test.dubbo.config.protocol.ProtocolExport;
 import com.my.test.dubbo.config.protocol.ProtocolFactory;
 import com.my.test.dubbo.config.util.CommonUtil;
 import com.my.test.dubbo.config.util.Constants;
+import com.my.test.dubbo.config.util.NetUtils;
 import com.my.test.dubbo.config.util.StringUtils;
 import com.my.test.dubbo.config.util.URL;
 
@@ -32,6 +34,7 @@ public class ClientProxy implements InvocationHandler {
 	private RefrenceConfig config;
 	private final static int RETRY_TIME_MAX = 5;
 	private final static long SLEEP_TIME = 5000l;
+	private static final org.slf4j.Logger logger = LoggerFactory.getLogger(NetUtils.class);
 
 	public ClientProxy(RefrenceConfig config) {
 		super();
@@ -51,9 +54,11 @@ public class ClientProxy implements InvocationHandler {
 				&& !"hashCode".equals(method.getName()) && !"notifyAll".equals(method.getName())
 				&& !"notifyAll".equals(method.getName()) && !"notify".equals(method.getName())
 				&& !"equals".equals(method.getName()) && !"getClass".equals(method.getName())) {
+			long start = System.currentTimeMillis();
+			String url = "";
 			try {
 				if (StringUtils.isEmpty(config.getUrl())) {
-					String url = loadBanlanceUrl();
+					url = loadBanlanceUrl();
 					if (!StringUtils.isEmpty(url)) {
 						ProtocolExport export = ProtocolFactory.get(CommonUtil.getSchema(url));
 						return export.invoke(url, config, method, args);
@@ -66,7 +71,6 @@ public class ClientProxy implements InvocationHandler {
 				}
 			} catch (Exception e) {
 				if ("AnnotatedConnectException".equals(e.getClass().getSimpleName())) {
-					System.out.println("----AnnotatedConnectException-----");
 					int restryTimes = atomicInteger.getAndDecrement();
 					if (restryTimes < RETRY_TIME_MAX) {
 						if (null != this.config.getRegistrys() && !this.config.getRegistrys().isEmpty()) {
@@ -81,6 +85,12 @@ public class ClientProxy implements InvocationHandler {
 					e.printStackTrace();
 					throw e;
 				}
+			} finally {
+				long end = System.currentTimeMillis();
+				if (logger.isDebugEnabled()) {
+					logger.debug("the service " + url + " take time " + (end - start) + "ms");
+				}
+
 			}
 
 		} else {
@@ -121,10 +131,11 @@ public class ClientProxy implements InvocationHandler {
 							result.add(url.toString());
 						}
 					});
-					if(result.isEmpty()){
-						throw new RuntimeException("no service for version:"+this.config.getVersion()+" in the service:"+this.config.getInterfaces());
+					if (result.isEmpty()) {
+						throw new RuntimeException("no service for version:" + this.config.getVersion()
+								+ " in the service:" + this.config.getInterfaces());
 					}
-					
+
 				}
 
 				if (result.isEmpty()) {
@@ -141,27 +152,26 @@ public class ClientProxy implements InvocationHandler {
 				if (result.isEmpty()) {
 					result.addAll(urls);
 				}
-				//筛选数据，保证每个服务器只存一条地址信息
-				Map<String,String>filterMap=new HashMap<>();
-				if(null!=result&&!result.isEmpty()){
-					result.forEach(str->{
+				// 筛选数据，保证每个服务器只存一条地址信息
+				Map<String, String> filterMap = new HashMap<>();
+				if (null != result && !result.isEmpty()) {
+					result.forEach(str -> {
 						URL u = URL.valueOf(str);
-						String host=u.getHost();
-						if(filterMap.containsKey(host)){
-							String oldVersion=URL.valueOf(filterMap.get(host)).getParameter(Constants.URL_PARAM_VERSION);
-							String version=u.getParameter(Constants.URL_PARAM_VERSION)==null?"*":u.getParameter(Constants.URL_PARAM_VERSION);
-							if(version.compareTo(oldVersion)>0){
+						String host = u.getHost();
+						if (filterMap.containsKey(host)) {
+							String oldVersion = URL.valueOf(filterMap.get(host))
+									.getParameter(Constants.URL_PARAM_VERSION);
+							String version = u.getParameter(Constants.URL_PARAM_VERSION) == null ? "*"
+									: u.getParameter(Constants.URL_PARAM_VERSION);
+							if (version.compareTo(oldVersion) > 0) {
 								filterMap.put(host, str);
 							}
-						}else{
+						} else {
 							filterMap.put(host, str);
 						}
-                        
-						
+
 					});
 				}
-
-		
 
 				if (null != filterMap && !filterMap.isEmpty()) {
 					result.clear();
